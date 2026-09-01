@@ -1,6 +1,15 @@
 from dataclasses import dataclass, field
+from enum import Enum
 from pathlib import Path
+from typing import Optional
 import re
+
+class NoiseType(str, Enum):
+    """Known PDF noise categories."""
+
+    NONE = "none"
+    HEADER = "header"
+    FOOTER = "footer"
 
 def normalize_text(text: str) -> str:
     """
@@ -83,7 +92,6 @@ class Line:
             )
         )
 
-
 @dataclass
 class Block:
     """A PDF text block containing one or more lines."""
@@ -91,6 +99,9 @@ class Block:
     raw_index: int
     bbox: tuple[float, float, float, float]
     lines: list[Line] = field(default_factory=list)
+
+    noise_type: NoiseType = NoiseType.NONE
+    noise_reason: Optional[str] = None
 
     @property
     def text(self) -> str:
