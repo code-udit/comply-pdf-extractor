@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from app.models.layout import LayoutSignals
 
 
 @dataclass
@@ -14,6 +15,10 @@ class CleanBlock:
     text: str
 
     source_text: str = ""
+
+    layout: LayoutSignals = field(
+        default_factory=LayoutSignals
+    )
 
     removed_as_noise: bool = False
     removal_reason: str | None = None
