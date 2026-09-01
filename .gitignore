@@ -33,3 +33,6 @@ output/
 
 # Assessment sample documents
 sample_documents/*.pdf
+
+# Debug extraction output
+debug_output/
