@@ -89,9 +89,8 @@ def classify_block(
     """
     Classify one cleaned document block.
 
-    Heading detection is deliberately conservative so that
-    labels, field values, phone numbers, and body text are
-    not incorrectly promoted to headings.
+    Strong semantic heading patterns take precedence over
+    layout-based table/list detection.
     """
 
     text = block.text.strip()
@@ -103,6 +102,30 @@ def classify_block(
             semantic_type=SemanticType.UNKNOWN,
             text=text,
             confidence=1.0,
+        )
+
+    # Heading detection comes first so that known headings
+    # are not incorrectly classified as tables or lists.
+    is_heading, heading_confidence, heading_signals = (
+        detect_heading_pattern(text)
+    )
+
+    if is_heading:
+        return SemanticBlock(
+            page_number=page_number,
+            source_block_index=block.raw_index,
+            semantic_type=SemanticType.HEADING,
+            text=text,
+            confidence=heading_confidence,
+            signals={
+                **heading_signals,
+                "indentation_level": (
+                    block.layout.indentation_level
+                ),
+                "repeated_x_position": (
+                    block.layout.repeated_x_position
+                ),
+            },
         )
 
     # Strong signal: list-like layout.
@@ -131,28 +154,6 @@ def classify_block(
             confidence=0.80,
             signals={
                 "table_like": True,
-                "repeated_x_position": (
-                    block.layout.repeated_x_position
-                ),
-            },
-        )
-
-    is_heading, heading_confidence, heading_signals = (
-        detect_heading_pattern(text)
-    )
-
-    if is_heading:
-        return SemanticBlock(
-            page_number=page_number,
-            source_block_index=block.raw_index,
-            semantic_type=SemanticType.HEADING,
-            text=text,
-            confidence=heading_confidence,
-            signals={
-                **heading_signals,
-                "indentation_level": (
-                    block.layout.indentation_level
-                ),
                 "repeated_x_position": (
                     block.layout.repeated_x_position
                 ),

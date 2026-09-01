@@ -2,6 +2,7 @@ from pathlib import Path
 
 import pymupdf
 
+from app.extraction.layout_analyzer import analyze_page_layout
 from app.models.document import (
     Block,
     Line,
@@ -40,6 +41,8 @@ class RawPDFExtractor:
                     page=page,
                     page_number=page_index + 1,
                 )
+
+                analyze_page_layout(page_data)
 
                 pages.append(page_data)
 
