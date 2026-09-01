@@ -1,10 +1,10 @@
-from app.models.document import PDFDocument
+from app.models.cleaning import CleanDocument
 from app.models.semantic import SemanticBlock
 from app.semantic.classifier import classify_block
 
 
 def process_document(
-    document: PDFDocument,
+    document: CleanDocument,
 ) -> list[SemanticBlock]:
     """
     Classify all blocks in a cleaned document.
