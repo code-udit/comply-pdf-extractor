@@ -2,6 +2,14 @@ from pathlib import Path
 
 import pymupdf
 
+from app.models.document import (
+    Block,
+    Line,
+    Page,
+    PDFDocument,
+    Span,
+)
+
 
 class RawPDFExtractor:
     """Extract raw layout information from a PDF."""
@@ -9,11 +17,8 @@ class RawPDFExtractor:
     def __init__(self, pdf_path: str | Path):
         self.pdf_path = Path(pdf_path)
 
-    def extract(self) -> list[dict]:
-        """
-        Extract pages, blocks, lines, and spans
-        with layout and font metadata.
-        """
+    def extract(self) -> PDFDocument:
+        """Extract the complete raw document structure."""
 
         if not self.pdf_path.exists():
             raise FileNotFoundError(
@@ -38,7 +43,10 @@ class RawPDFExtractor:
 
                 pages.append(page_data)
 
-            return pages
+            return PDFDocument(
+                source=self.pdf_path,
+                pages=pages,
+            )
 
         finally:
             document.close()
@@ -47,51 +55,60 @@ class RawPDFExtractor:
         self,
         page: pymupdf.Page,
         page_number: int,
-    ) -> dict:
-        """Extract layout information from one page."""
+    ) -> Page:
+        """Extract one PDF page into our internal model."""
 
         page_dict = page.get_text("dict")
 
         blocks = []
 
-        for block_index, block in enumerate(page_dict["blocks"]):
-            # Image blocks and other non-text blocks may not
-            # contain a "lines" field.
-            if "lines" not in block:
+        for block_index, raw_block in enumerate(
+            page_dict["blocks"]
+        ):
+            # Ignore non-text blocks for now.
+            if "lines" not in raw_block:
                 continue
 
-            block_data = {
-                "block_index": block_index,
-                "bbox": block.get("bbox"),
-                "lines": [],
-            }
+            lines = []
 
-            for line_index, line in enumerate(block["lines"]):
-                line_data = {
-                    "line_index": line_index,
-                    "bbox": line.get("bbox"),
-                    "spans": [],
-                }
+            for line_index, raw_line in enumerate(
+                raw_block["lines"]
+            ):
+                spans = []
 
-                for span_index, span in enumerate(line["spans"]):
-                    span_data = {
-                        "span_index": span_index,
-                        "text": span.get("text", ""),
-                        "bbox": span.get("bbox"),
-                        "font": span.get("font"),
-                        "font_size": span.get("size"),
-                        "flags": span.get("flags"),
-                    }
+                for span_index, raw_span in enumerate(
+                    raw_line["spans"]
+                ):
+                    spans.append(
+                        Span(
+                            index=span_index,
+                            text=raw_span.get("text", ""),
+                            bbox=tuple(raw_span["bbox"]),
+                            font=raw_span.get("font"),
+                            font_size=raw_span.get("size"),
+                            flags=raw_span.get("flags"),
+                        )
+                    )
 
-                    line_data["spans"].append(span_data)
+                lines.append(
+                    Line(
+                        index=line_index,
+                        bbox=tuple(raw_line["bbox"]),
+                        spans=spans,
+                    )
+                )
 
-                block_data["lines"].append(line_data)
+            blocks.append(
+                Block(
+                    raw_index=block_index,
+                    bbox=tuple(raw_block["bbox"]),
+                    lines=lines,
+                )
+            )
 
-            blocks.append(block_data)
-
-        return {
-            "page_number": page_number,
-            "width": page.rect.width,
-            "height": page.rect.height,
-            "blocks": blocks,
-        }
+        return Page(
+            page_number=page_number,
+            width=page.rect.width,
+            height=page.rect.height,
+            blocks=blocks,
+        )

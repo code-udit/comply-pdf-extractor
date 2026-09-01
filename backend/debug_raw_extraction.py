@@ -13,23 +13,43 @@ PDF_PATH = (
 
 
 def get_bold_status(flags: int | None) -> bool:
-    """
-    Determine whether the PyMuPDF font flags indicate bold.
-
-    This is only a preliminary indicator.
-    We will improve style classification later.
-    """
+    """Return whether the PyMuPDF flags indicate bold."""
 
     if flags is None:
         return False
 
-    # PyMuPDF uses bit 4 for bold.
     return bool(flags & 16)
+
+
+def print_block(block, display_index: int):
+    print("\n" + "-" * 80)
+    print(f"VISUAL BLOCK {display_index}")
+    print(f"RAW BLOCK INDEX {block.raw_index}")
+    print("-" * 80)
+
+    print(f"bbox={block.bbox}")
+    print(f"x0={block.x0}")
+    print(f"y0={block.y0}")
+    print(f"text={block.text!r}")
+
+    for line in block.lines:
+        print(f"\n  LINE {line.index}")
+        print(f"  bbox={line.bbox}")
+        print(f"  text={line.text!r}")
+
+        for span in line.spans:
+            print("\n    SPAN")
+            print(f"    text={span.text!r}")
+            print(f"    bbox={span.bbox}")
+            print(f"    font={span.font!r}")
+            print(f"    font_size={span.font_size}")
+            print(f"    flags={span.flags}")
+            print(f"    bold={get_bold_status(span.flags)}")
 
 
 def main():
     print("=" * 80)
-    print("RAW PDF LAYOUT EXTRACTION")
+    print("RAW PDF DATA MODEL + VISUAL ORDER TEST")
     print("=" * 80)
 
     print(f"PDF: {PDF_PATH}")
@@ -37,48 +57,51 @@ def main():
 
     extractor = RawPDFExtractor(PDF_PATH)
 
-    pages = extractor.extract()
+    document = extractor.extract()
 
-    print(f"Pages extracted: {len(pages)}")
+    print(f"Pages extracted: {document.page_count}")
 
-    # For the first run, inspect only Page 1.
-    page = pages[0]
+    page = document.pages[0]
 
-    print("\n")
-    print("=" * 80)
-    print(f"PAGE {page['page_number']}")
+    print("\n" + "=" * 80)
+    print(f"PAGE {page.page_number}")
     print("=" * 80)
 
-    print(f"Page width:  {page['width']}")
-    print(f"Page height: {page['height']}")
-    print(f"Blocks:      {len(page['blocks'])}")
+    print(f"Page width:  {page.width}")
+    print(f"Page height: {page.height}")
+    print(f"Raw blocks:  {len(page.blocks)}")
 
-    for block in page["blocks"]:
-        print("\n" + "-" * 80)
-        print(f"BLOCK {block['block_index']}")
-        print("-" * 80)
-
-        print(f"bbox={block['bbox']}")
-        print(f"lines={len(block['lines'])}")
-
-        for line in block["lines"]:
-            print(f"\n  LINE {line['line_index']}")
-            print(f"  bbox={line['bbox']}")
-
-            for span in line["spans"]:
-                bold = get_bold_status(span["flags"])
-
-                print("\n    SPAN")
-                print(f"    text={span['text']!r}")
-                print(f"    bbox={span['bbox']}")
-                print(f"    font={span['font']!r}")
-                print(f"    font_size={span['font_size']}")
-                print(f"    flags={span['flags']}")
-                print(f"    bold={bold}")
-
-    print("\n")
+    print("\n" + "=" * 80)
+    print("VISUAL BLOCK ORDER")
     print("=" * 80)
-    print("RAW EXTRACTION COMPLETE")
+
+    for display_index, block in enumerate(
+        page.visual_blocks,
+        start=1,
+    ):
+        print_block(
+            block=block,
+            display_index=display_index,
+        )
+
+    print("\n" + "=" * 80)
+    print("RAW → VISUAL ORDER COMPARISON")
+    print("=" * 80)
+
+    for visual_index, block in enumerate(
+        page.visual_blocks,
+        start=1,
+    ):
+        print(
+            f"Visual {visual_index:02d} "
+            f"<- Raw {block.raw_index:02d} "
+            f"| y={block.y0:7.2f} "
+            f"| x={block.x0:7.2f} "
+            f"| {block.text[:80]!r}"
+        )
+
+    print("\n" + "=" * 80)
+    print("STEP 4 TEST COMPLETE")
     print("=" * 80)
 
 
