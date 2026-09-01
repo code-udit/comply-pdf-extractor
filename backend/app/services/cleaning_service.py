@@ -11,7 +11,7 @@ def clean_document(document: PDFDocument) -> CleanDocument:
     Create a cleaned representation without modifying the raw document.
 
     Noise blocks are excluded from the cleaned pages.
-    Original block text is preserved in source_text.
+    Original block text and layout signals are preserved.
     """
 
     clean_document = CleanDocument()
@@ -37,6 +37,7 @@ def clean_document(document: PDFDocument) -> CleanDocument:
                 raw_index=block.raw_index,
                 text=text,
                 source_text=source_text,
+                layout=block.layout,
             )
 
             clean_page.blocks.append(clean_block)
