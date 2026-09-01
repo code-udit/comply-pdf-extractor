@@ -53,6 +53,7 @@ def detect_heading_pattern(
     #
     # Rejected:
     #   2021 under SERFF tracking number...
+    #   134334281) Attachment(s):
     numbered_match = re.match(
         r"^(?P<number>\d+(?:\.\d+)*)(?:[.)])\s+"
         r"(?P<title>[A-Za-z][^\n]{2,120})$",
@@ -60,14 +61,22 @@ def detect_heading_pattern(
     )
 
     if numbered_match:
+        number = numbered_match.group("number")
         title = numbered_match.group("title").strip()
+
+        # Section numbers should be structurally small.
+        # Reject tracking/reference numbers such as:
+        #   134334281) Attachment(s):
+        number_parts = number.split(".")
+
+        if any(len(part) > 2 for part in number_parts):
+            return False, 0.0, {}
 
         if (
             len(title.split()) <= 16
             and not re.search(r"[.!?]\s*$", title)
         ):
-            number = numbered_match.group("number")
-            level = number.count(".") + 1
+            level = len(number_parts)
 
             return (
                 True,
