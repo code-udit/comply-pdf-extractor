@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Optional
 import re
 from app.models.layout import LayoutSignals
+from app.models.page_layout import PageLayoutSummary
 
 class NoiseType(str, Enum):
     """Known PDF noise categories."""
@@ -143,12 +144,14 @@ class Block:
 
 @dataclass
 class Page:
-    """A single PDF page."""
-
     page_number: int
     width: float
     height: float
     blocks: list[Block] = field(default_factory=list)
+
+    layout_summary: PageLayoutSummary = field(
+        default_factory=PageLayoutSummary
+    )
 
     @property
     def visual_blocks(self) -> list[Block]:

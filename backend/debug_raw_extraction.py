@@ -3,6 +3,7 @@ from pathlib import Path
 from app.extraction.raw_extractor import RawPDFExtractor
 from app.extraction.noise_detector import classify_page_noise
 from app.extraction.layout_analyzer import analyze_page_layout
+from app.extraction.page_layout_analyzer import analyze_page_layout_summary
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -87,6 +88,27 @@ def main():
     for page in document.pages:
         classify_page_noise(page)
         analyze_page_layout(page)
+        analyze_page_layout_summary(page)
+
+    print()
+    print("=" * 80)
+    print("PAGE LAYOUT SUMMARY")
+    print("=" * 80)
+
+    for page in document.pages:
+        summary = page.layout_summary
+
+        print(
+            f"Page {page.page_number:03d}"
+            f" | blocks={summary.block_count}"
+            f" | top={summary.content_top}"
+            f" | bottom={summary.content_bottom}"
+            f" | repeated_x={summary.repeated_x_positions}"
+            f" | lists={summary.list_like_blocks}"
+            f" | tables={summary.table_like_blocks}"
+            f" | headers={summary.header_blocks}"
+            f" | footers={summary.footer_blocks}"
+        )
 
     print(f"Pages extracted: {document.page_count}")
 
