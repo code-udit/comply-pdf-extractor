@@ -30,16 +30,19 @@ def print_block(block, display_index: int):
     print(f"bbox={block.bbox}")
     print(f"x0={block.x0}")
     print(f"y0={block.y0}")
-    print(f"text={block.text!r}")
+    print(f"raw_text={block.text!r}")
+    print(f"normalized_text={block.normalized_text!r}")
 
     for line in block.lines:
         print(f"\n  LINE {line.index}")
         print(f"  bbox={line.bbox}")
-        print(f"  text={line.text!r}")
+        print(f"  raw_text={line.text!r}")
+        print(f"  normalized_text={line.normalized_text!r}")
 
         for span in line.spans:
             print("\n    SPAN")
-            print(f"    text={span.text!r}")
+            print(f"    raw_text={span.text!r}")
+            print(f"    normalized_text={span.normalized_text!r}")
             print(f"    bbox={span.bbox}")
             print(f"    font={span.font!r}")
             print(f"    font_size={span.font_size}")

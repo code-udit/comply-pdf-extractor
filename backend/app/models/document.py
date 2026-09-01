@@ -1,6 +1,27 @@
 from dataclasses import dataclass, field
 from pathlib import Path
+import re
 
+def normalize_text(text: str) -> str:
+    """
+    Safely normalize extracted PDF text.
+
+    The original text is never modified.
+    """
+
+    if not text:
+        return ""
+
+    # Replace tabs and line breaks with spaces.
+    text = text.replace("\t", " ")
+    text = text.replace("\r", " ")
+    text = text.replace("\n", " ")
+
+    # Collapse repeated whitespace.
+    text = re.sub(r"\s+", " ", text)
+
+    # Remove leading/trailing whitespace.
+    return text.strip()
 
 @dataclass
 class Span:
@@ -12,6 +33,12 @@ class Span:
     font: str | None
     font_size: float | None
     flags: int | None
+
+    @property
+    def normalized_text(self) -> str:
+        """Return safely normalized span text."""
+
+        return normalize_text(self.text)
 
     @property
     def x0(self) -> float:
@@ -40,7 +67,21 @@ class Line:
 
     @property
     def text(self) -> str:
-        return "".join(span.text for span in self.spans)
+        return "".join(
+            span.text
+            for span in self.spans
+        )
+
+    @property
+    def normalized_text(self) -> str:
+        """Return normalized text for the complete line."""
+
+        return normalize_text(
+            "".join(
+                span.normalized_text
+                for span in self.spans
+            )
+        )
 
 
 @dataclass
@@ -57,6 +98,16 @@ class Block:
             line.text
             for line in self.lines
             if line.text.strip()
+        )
+
+    @property
+    def normalized_text(self) -> str:
+        """Return normalized text for the complete block."""
+
+        return "\n".join(
+            line.normalized_text
+            for line in self.lines
+            if line.normalized_text
         )
 
     @property
