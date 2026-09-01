@@ -3,6 +3,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Optional
 import re
+from app.models.layout import LayoutSignals
 
 class NoiseType(str, Enum):
     """Known PDF noise categories."""
@@ -94,14 +95,16 @@ class Line:
 
 @dataclass
 class Block:
-    """A PDF text block containing one or more lines."""
-
     raw_index: int
     bbox: tuple[float, float, float, float]
     lines: list[Line] = field(default_factory=list)
 
     noise_type: NoiseType = NoiseType.NONE
     noise_reason: Optional[str] = None
+
+    layout: LayoutSignals = field(
+        default_factory=LayoutSignals
+    )
 
     @property
     def text(self) -> str:

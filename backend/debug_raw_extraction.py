@@ -1,6 +1,8 @@
 from pathlib import Path
 
 from app.extraction.raw_extractor import RawPDFExtractor
+from app.extraction.noise_detector import classify_page_noise
+from app.extraction.layout_analyzer import analyze_page_layout
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -30,6 +32,27 @@ def print_block(block, display_index: int):
     print(f"bbox={block.bbox}")
     print(f"x0={block.x0}")
     print(f"y0={block.y0}")
+
+    print(
+        f"column={block.layout.column_index}"
+    )
+
+    print(
+        f"indentation={block.layout.indentation_level}"
+    )
+
+    print(
+        f"list_like={block.layout.is_list_like}"
+    )
+
+    print(
+        f"table_like={block.layout.is_table_like}"
+    )
+
+    print(
+        f"repeated_x={block.layout.repeated_x_position}"
+    )
+    
     print(f"raw_text={block.text!r}")
     print(f"normalized_text={block.normalized_text!r}")
 
@@ -61,6 +84,9 @@ def main():
     extractor = RawPDFExtractor(PDF_PATH)
 
     document = extractor.extract()
+    for page in document.pages:
+        classify_page_noise(page)
+        analyze_page_layout(page)
 
     print(f"Pages extracted: {document.page_count}")
 
