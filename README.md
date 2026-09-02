@@ -3,7 +3,8 @@
 **Developed By:** Udit Gunagi
 
 🔗 **Live Demo:** [https://comply-pdf-frontend.onrender.com](https://comply-pdf-frontend.onrender.com)
-📦 **GitHub Repository:** [https://github.com/code-udit/comply-pdf-extractor.git](https://github.com/code-udit/comply-pdf-extractor.git)
+
+📦 **GitHub Repository:** [https://github.com/code-udit/comply-pdf-extractor](https://github.com/code-udit/comply-pdf-extractor)
 
 ---
 
@@ -40,7 +41,7 @@ The system takes a raw, unstructured PDF and turns it into a hierarchical, navig
 ## Features
 
 - 📄 **Drag-and-drop PDF upload** with client-side validation
-- 🧠 **Automated heading vs. body-text classification** using layout, typography, and semantic signals — not just font size
+- 🧠 **Automated heading vs. body-text classification** using a known SERFF section-name vocabulary, numbered/sub-heading pattern rules, and layout signals (indentation, repeated column position) for table/list detection
 - 🗂️ **Hierarchical section grouping** (headings, sub-headings, and their associated blocks) rather than a flat list
 - 🔍 **In-app search and filtering** by semantic type (heading, paragraph, table, list)
 - ⚡ **FastAPI backend** exposing a single, well-typed extraction endpoint
@@ -140,14 +141,14 @@ comply-pdf-extractor/
 - Python 3.12+
 - Node.js 20+
 - npm
-- (Optional) Docker & Docker Compose
+- Docker & Docker Compose
 
 ### Backend Setup
 
 ```bash
 cd backend
 python -m venv venv
-source venv/bin/activate        # Windows: venv\Scripts\activate
+venv\Scripts\activate
 
 pip install -r requirements.txt
 
@@ -236,10 +237,10 @@ The extraction engine runs a filing through four stages:
 
 1. **Raw Extraction** — Parses the PDF with PyMuPDF, capturing every text block along with its position, font, and size on each page.
 2. **Cleaning & Noise Detection** — Strips repeated headers, footers, page numbers, and watermark artifacts that would otherwise pollute the output.
-3. **Semantic Classification** — Classifies each block as a `heading`, `paragraph`, `table`, `list`, or `unknown` using a combination of layout signals (font size, boldness, whitespace), pattern rules (numbered sections, known SERFF section names), and confidence scoring — rather than relying on font size alone.
+3. **Semantic Classification** — Classifies each block as a `heading`, `paragraph`, `table`, `list`, or `unknown`. Headings are detected via a known SERFF section-name vocabulary plus numbered-section and sub-heading (Objection/Response/Item N) pattern rules; tables and lists are detected from layout signals (indentation level, repeated x-position/column alignment). Each block is assigned a confidence value based on which rule matched (e.g. a known heading name scores higher than a looser sub-heading pattern) rather than a fully computed statistical score.
 4. **Hierarchical Grouping** — Groups classified blocks under their parent headings, building a nested section tree (headings, sub-headings, and the body text that belongs to each) that mirrors how a human would read the document.
 
-This layered approach makes the pipeline robust across differently formatted filings, rather than being tuned to a single document template.
+This approach is tuned to the SERFF filing structure used in the sample documents (via the known heading vocabulary and pattern rules). Extending it to other filing formats would mean adding their section-name vocabulary and/or layering in font-size/boldness signals, which the raw extractor already captures but the classifier doesn't yet use.
 
 ---
 
@@ -269,12 +270,13 @@ This project was built in response to a take-home assignment from **Comply** (re
 2. A FastAPI endpoint that runs the extraction on an uploaded document and returns structured JSON.
 3. A React UI that lets a user upload a filing, trigger extraction, and view the results in a readable layout.
 
-The solution above satisfies all three requirements end-to-end, with an emphasis on layout-aware classification (rather than naive heuristics), a scalable, stateless API, and a polished, searchable frontend experience.
+The solution above satisfies all three requirements end-to-end, with pattern- and layout-aware classification tuned for the SERFF filing format of the sample documents, a scalable, stateless API, and a polished, searchable frontend experience.
 
 ---
 
 ## Future Improvements
 
+- Incorporate font-size/boldness as a secondary heading signal (already captured by the raw extractor, not yet used by the classifier) to generalize beyond the known SERFF heading vocabulary
 - OCR support for scanned/image-based filings
 - User authentication and per-user document history
 - Export extracted sections to JSON/CSV/DOCX
